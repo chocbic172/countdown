@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Countdown</string>
+    <string name="widget_description">Days until your event, on your home screen</string>
+    <string name="widget_config_label">Countdown widget</string>
+</resources>
