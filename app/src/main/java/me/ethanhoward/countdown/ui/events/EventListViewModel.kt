@@ -5,16 +5,24 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import me.ethanhoward.countdown.appContainer
-import me.ethanhoward.countdown.data.Event
 import me.ethanhoward.countdown.data.EventRepository
+import me.ethanhoward.countdown.ui.components.EventThumbnails
+import me.ethanhoward.countdown.ui.components.EventWithThumbnail
 
 class EventListViewModel(repository: EventRepository) : ViewModel() {
+    private val thumbnails = EventThumbnails()
+
     /** Null until the first load completes. */
-    val events: StateFlow<List<Event>?> = repository.observeAll()
+    val events: StateFlow<List<EventWithThumbnail>?> = repository.observeAll()
+        .map(thumbnails::load)
+        .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     companion object {

@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.FormatPaint
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -82,9 +83,14 @@ interface AppearanceActions {
 
 @Composable
 fun Section(title: String, content: @Composable () -> Unit) {
-    Column {
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(16.dp)
+    ) {
         Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-        HorizontalDivider(Modifier.padding(top = 4.dp, bottom = 12.dp))
+        Spacer(Modifier.padding(top = 4.dp, bottom = 12.dp))
         content()
     }
 }
@@ -106,12 +112,7 @@ fun WidgetPreview(draft: EventDraft, look: EventAppearance, photo: Bitmap?, phot
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFE3E0F2))
-            // Flat "wallpaper" shapes so translucent backgrounds read as translucent.
-            .drawBehind {
-                drawCircle(Color(0xFFC8C2E6), radius = size.height * 0.85f, center = Offset(size.width * 0.9f, 0f))
-                drawCircle(Color(0xFFD6D1EC), radius = size.height * 0.6f, center = Offset(0f, size.height))
-            },
+            .background(MaterialTheme.colorScheme.surfaceContainer),
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -167,7 +168,17 @@ fun AppearanceEditor(
                         selected = look.backgroundType == type,
                         onClick = { actions.setBackgroundType(type) },
                         shape = SegmentedButtonDefaults.itemShape(i, BackgroundType.entries.size),
-                    ) { Text(if (type == BackgroundType.COLOR) "Solid color" else "Photo") }
+                        label = {
+                            Text(if (type == BackgroundType.COLOR) "Solid colour" else "Photo")
+                        },
+                        icon = {
+                            if (type == BackgroundType.COLOR) {
+                                Icon(Icons.Outlined.FormatPaint, contentDescription = "Colour")
+                            } else {
+                                Icon(Icons.Outlined.Image, contentDescription = "Photo")
+                            }
+                        }
+                    )
                 }
             }
             Spacer(Modifier.height(12.dp))

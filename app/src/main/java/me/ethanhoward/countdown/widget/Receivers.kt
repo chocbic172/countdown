@@ -61,25 +61,3 @@ class TimeChangeReceiver : BroadcastReceiver() {
         }
     }
 }
-
-/**
- * Callback for widgets pinned from inside the app (AppWidgetManager.requestPinAppWidget). The
- * system skips the configure activity in that flow, so we link the widget to the event here.
- */
-class PinWidgetReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-        val eventId = intent.getLongExtra(EXTRA_EVENT_ID, -1L)
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID || eventId < 0) return
-        launchAsync {
-            context.appContainer.widgetConfigRepository.save(WidgetConfig(appWidgetId = appWidgetId, eventId = eventId))
-            val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
-            WidgetRefresher.refresh(context, glanceId)
-            WidgetRefresher.scheduleNext(context)
-        }
-    }
-
-    companion object {
-        const val EXTRA_EVENT_ID = "me.ethanhoward.countdown.EXTRA_EVENT_ID"
-    }
-}
