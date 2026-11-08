@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Set by CI. Without it, release builds come out unsigned.
+val releaseKeystorePath: String? = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNull
+
 android {
     namespace = "me.ethanhoward.countdown"
     compileSdk {
@@ -16,14 +19,29 @@ android {
         applicationId = "me.ethanhoward.countdown"
         minSdk = 33
         targetSdk = 36
-        versionCode = 1
+        // Each CI run counts as newer than the last, so its APK installs as an update.
+        versionCode = providers.environmentVariable("GITHUB_RUN_NUMBER").orNull?.toInt() ?: 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseKeystorePath != null) {
+            create("release") {
+                val keystorePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").get()
+                storeFile = file(releaseKeystorePath)
+                storePassword = keystorePassword
+                keyAlias = providers.environmentVariable("RELEASE_KEY_ALIAS").get()
+                // PKCS12 keystores use one password for both the store and the key.
+                keyPassword = keystorePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseKeystorePath != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
