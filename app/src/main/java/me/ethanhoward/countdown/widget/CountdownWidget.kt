@@ -1,5 +1,6 @@
 package me.ethanhoward.countdown.widget
 
+import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -51,11 +52,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import me.ethanhoward.countdown.MainActivity
 import me.ethanhoward.countdown.appContainer
 import me.ethanhoward.countdown.data.BackgroundType
 import me.ethanhoward.countdown.data.Event
-import me.ethanhoward.countdown.data.WidgetConfig
+import me.ethanhoward.countdown.data.EventAppearance
 import me.ethanhoward.countdown.domain.ColorMath
 import me.ethanhoward.countdown.domain.CountdownCalculator
 
@@ -64,7 +64,8 @@ sealed interface WidgetUiState {
     /** Placed but not yet configured (e.g. the configure activity was skipped). */
     data object NotConfigured : WidgetUiState
 
-    data class Ready(val config: WidgetConfig, val event: Event?, val background: Bitmap?) : WidgetUiState
+    /** [event] is null when the widget's event was deleted. */
+    data class Ready(val event: Event?, val background: Bitmap?) : WidgetUiState
 }
 
 class CountdownWidget : GlanceAppWidget() {
@@ -87,15 +88,15 @@ class CountdownWidget : GlanceAppWidget() {
     private fun observeState(context: Context, appWidgetId: Int): Flow<WidgetUiState> {
         val container = context.appContainer
         return container.widgetConfigRepository.observe(appWidgetId).flatMapLatest { config ->
-            if (config == null) return@flatMapLatest flowOf(WidgetUiState.NotConfigured)
-            val background = loadBackground(config)
+            if (config == null) return@flatMapLatest flowOf<WidgetUiState>(WidgetUiState.NotConfigured)
             val events = config.eventId?.let { container.eventRepository.observe(it) } ?: flowOf(null)
-            events.map { WidgetUiState.Ready(config, it, background) }
+            events.map { event -> WidgetUiState.Ready(event, event?.let(::loadBackground)) }
         }.flowOn(Dispatchers.IO)
     }
 
-    private fun loadBackground(config: WidgetConfig): Bitmap? =
-        if (config.backgroundType == BackgroundType.PHOTO) config.imagePath?.let(BitmapFactory::decodeFile) else null
+    private fun loadBackground(event: Event): Bitmap? = with(event.appearance) {
+        if (backgroundType == BackgroundType.PHOTO) imagePath?.let(BitmapFactory::decodeFile) else null
+    }
 
     companion object {
         val SIZE_SMALL = DpSize(110.dp, 50.dp)
@@ -126,14 +127,14 @@ private fun WidgetContent(context: Context, appWidgetId: Int, state: WidgetUiSta
         ) { Message("Tap to set up", LightText) }
 
         is WidgetUiState.Ready -> {
-            val config = state.config
-            val luminance = if (config.backgroundType == BackgroundType.PHOTO) {
-                config.backgroundLuminance
-            } else {
-                ColorMath.luminance(config.backgroundColor)
-            }
-            val textColor = if (ColorMath.useDarkText(config.textColorMode, luminance)) DarkText else LightText
             val event = state.event
+            val look = event?.appearance ?: EventAppearance()
+            val luminance = if (look.backgroundType == BackgroundType.PHOTO) {
+                look.backgroundLuminance
+            } else {
+                ColorMath.luminance(look.backgroundColor)
+            }
+            val textColor = if (ColorMath.useDarkText(look.textColorMode, luminance)) DarkText else LightText
 
             Box(modifier = root.clickable(configureAction), contentAlignment = Alignment.Center) {
                 if (state.background != null) {
@@ -144,7 +145,7 @@ private fun WidgetContent(context: Context, appWidgetId: Int, state: WidgetUiSta
                         modifier = GlanceModifier.fillMaxSize(),
                     )
                 } else {
-                    Box(GlanceModifier.fillMaxSize().background(Color(config.backgroundColor).copy(alpha = config.opacity))) {}
+                    Box(GlanceModifier.fillMaxSize().background(Color(look.backgroundColor).copy(alpha = look.opacity))) {}
                 }
                 Box(GlanceModifier.fillMaxSize().padding(12.dp), contentAlignment = Alignment.Center) {
                     if (event == null) {
@@ -161,11 +162,13 @@ private fun WidgetContent(context: Context, appWidgetId: Int, state: WidgetUiSta
     }
 }
 
+@SuppressLint("RestrictedApi") // Suppress ColorProvider API issue
 @Composable
 private fun Message(text: String, color: Color) {
     Text(text, style = TextStyle(color = ColorProvider(color), fontSize = 14.sp, fontWeight = FontWeight.Medium))
 }
 
+@SuppressLint("RestrictedApi") // Suppress ColorProvider API issue
 @Composable
 private fun Countdown(number: String, unit: String, title: String, color: Color) {
     val size = LocalSize.current

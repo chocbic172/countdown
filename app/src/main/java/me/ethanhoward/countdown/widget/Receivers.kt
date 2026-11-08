@@ -21,7 +21,9 @@ private fun BroadcastReceiver.launchAsync(block: suspend CoroutineScope.() -> Un
         try {
             block()
         } finally {
-            pending.finish()
+            if (pending !== null) {
+                pending.finish()
+            }
         }
     }
 }
@@ -62,7 +64,7 @@ class TimeChangeReceiver : BroadcastReceiver() {
 
 /**
  * Callback for widgets pinned from inside the app (AppWidgetManager.requestPinAppWidget). The
- * system skips the configure activity in that flow, so we create a default config for the event.
+ * system skips the configure activity in that flow, so we link the widget to the event here.
  */
 class PinWidgetReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 class EventRepository(
     private val dao: EventDao,
+    val images: EventImageStore,
     /** Invoked after any change so placed widgets re-render. */
     private val onChanged: suspend () -> Unit,
 ) {
@@ -21,6 +22,16 @@ class EventRepository(
 
     suspend fun delete(event: Event) {
         dao.delete(event)
+        images.delete(event.appearance.imagePath, event.appearance.sourceImagePath)
         onChanged()
+    }
+
+    /** Removes image files left behind by deleted events, replaced photos or the v1 layout. */
+    suspend fun pruneImages() {
+        val referenced = getAll()
+            .flatMap { listOf(it.appearance.imagePath, it.appearance.sourceImagePath) }
+            .filterNotNull()
+            .toSet()
+        images.prune(referenced)
     }
 }

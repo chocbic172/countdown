@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import me.ethanhoward.countdown.data.AppDatabase
+import me.ethanhoward.countdown.data.EventImageStore
 import me.ethanhoward.countdown.data.EventRepository
 import me.ethanhoward.countdown.data.WidgetConfigRepository
 import me.ethanhoward.countdown.widget.WidgetBackgroundProcessor
@@ -21,11 +22,15 @@ class AppContainer(context: Context) {
     val database: AppDatabase by lazy { AppDatabase.create(appContext) }
 
     val eventRepository: EventRepository by lazy {
-        EventRepository(database.eventDao()) { WidgetRefresher.refreshAll(appContext) }
+        val images = EventImageStore(
+            dir = File(appContext.filesDir, "event_bg").apply { mkdirs() },
+            legacyDirs = listOf(File(appContext.filesDir, "widget_bg")),
+        )
+        EventRepository(database.eventDao(), images) { WidgetRefresher.refreshAll(appContext) }
     }
 
     val widgetConfigRepository: WidgetConfigRepository by lazy {
-        WidgetConfigRepository(database.widgetConfigDao(), File(appContext.filesDir, "widget_bg").apply { mkdirs() })
+        WidgetConfigRepository(database.widgetConfigDao())
     }
 
     val backgroundProcessor: WidgetBackgroundProcessor by lazy { WidgetBackgroundProcessor(appContext) }

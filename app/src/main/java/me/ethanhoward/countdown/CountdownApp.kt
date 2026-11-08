@@ -11,7 +11,10 @@ class CountdownApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
-        // Make sure the refresh chain exists (e.g. after an app update or if work was cleared).
-        container.appScope.launch { WidgetRefresher.scheduleNext(this@CountdownApp) }
+        container.appScope.launch {
+            // Make sure the refresh chain exists (e.g. after an app update or if work was cleared).
+            WidgetRefresher.scheduleNext(this@CountdownApp)
+            container.eventRepository.pruneImages()
+        }
     }
 }

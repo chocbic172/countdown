@@ -1,0 +1,167 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "2dcff818a2574c081a1c2a70ec801210",
+    "entities": [
+      {
+        "tableName": "events",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `targetDate` INTEGER NOT NULL, `targetTime` INTEGER, `createdAt` INTEGER NOT NULL, `backgroundType` TEXT NOT NULL DEFAULT 'COLOR', `backgroundColor` INTEGER NOT NULL DEFAULT -12627531, `opacity` REAL NOT NULL DEFAULT 1, `blur` REAL NOT NULL DEFAULT 0, `contrast` REAL NOT NULL DEFAULT 1, `imagePath` TEXT, `sourceImagePath` TEXT, `backgroundLuminance` REAL NOT NULL DEFAULT 0, `textColorMode` TEXT NOT NULL DEFAULT 'AUTO', `appearanceUpdatedAt` INTEGER NOT NULL DEFAULT 0)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetDate",
+            "columnName": "targetDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetTime",
+            "columnName": "targetTime",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appearance.backgroundType",
+            "columnName": "backgroundType",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'COLOR'"
+          },
+          {
+            "fieldPath": "appearance.backgroundColor",
+            "columnName": "backgroundColor",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "-12627531"
+          },
+          {
+            "fieldPath": "appearance.opacity",
+            "columnName": "opacity",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "appearance.blur",
+            "columnName": "blur",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "appearance.contrast",
+            "columnName": "contrast",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "appearance.imagePath",
+            "columnName": "imagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "appearance.sourceImagePath",
+            "columnName": "sourceImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "appearance.backgroundLuminance",
+            "columnName": "backgroundLuminance",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "appearance.textColorMode",
+            "columnName": "textColorMode",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'AUTO'"
+          },
+          {
+            "fieldPath": "appearance.appearanceUpdatedAt",
+            "columnName": "appearanceUpdatedAt",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "widget_config",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`appWidgetId` INTEGER NOT NULL, `eventId` INTEGER, PRIMARY KEY(`appWidgetId`), FOREIGN KEY(`eventId`) REFERENCES `events`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "appWidgetId",
+            "columnName": "appWidgetId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventId",
+            "columnName": "eventId",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "appWidgetId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_widget_config_eventId",
+            "unique": false,
+            "columnNames": [
+              "eventId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_widget_config_eventId` ON `${TABLE_NAME}` (`eventId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "events",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "eventId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2dcff818a2574c081a1c2a70ec801210')"
+    ]
+  }
+}

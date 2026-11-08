@@ -38,6 +38,10 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        // Exported Room schemas, used by MigrationTest.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 ksp {
@@ -63,6 +67,10 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.work.runtime.ktx)
+    constraints {
+        // room-testing (MigrationTest) needs >= 1.8.1, and test APKs must match the app's versions.
+        implementation(libs.kotlinx.serialization.core)
+    }
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

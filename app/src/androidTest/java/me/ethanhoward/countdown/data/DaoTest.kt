@@ -33,14 +33,29 @@ class DaoTest {
         assertEquals(LocalTime.of(9, 30), events.getAll().first().targetTime)
     }
 
-    @Test fun deletingEventClearsWidgetEventButKeepsConfig() = runBlocking {
+    @Test fun appearanceRoundTrips() = runBlocking {
+        val look = EventAppearance(
+            backgroundType = BackgroundType.PHOTO,
+            backgroundColor = 0xFF00897B.toInt(),
+            opacity = 0.6f,
+            blur = 12f,
+            contrast = 1.4f,
+            imagePath = "/data/x.webp",
+            sourceImagePath = "/data/x_src.jpg",
+            backgroundLuminance = 0.3f,
+            textColorMode = TextColorMode.DARK,
+            appearanceUpdatedAt = 42,
+        )
+        val id = db.eventDao().insert(Event(title = "Trip", targetDate = LocalDate.of(2026, 12, 18), appearance = look))
+        assertEquals(look, db.eventDao().get(id)!!.appearance)
+    }
+
+    @Test fun deletingEventClearsWidgetEventButKeepsWidget() = runBlocking {
         val id = db.eventDao().insert(Event(title = "Party", targetDate = LocalDate.of(2026, 12, 31)))
-        db.widgetConfigDao().upsert(WidgetConfig(appWidgetId = 7, eventId = id, opacity = 0.5f))
+        db.widgetConfigDao().upsert(WidgetConfig(appWidgetId = 7, eventId = id))
 
         db.eventDao().delete(db.eventDao().get(id)!!)
 
-        val config = db.widgetConfigDao().get(7)!!
-        assertNull(config.eventId)
-        assertEquals(0.5f, config.opacity)
+        assertNull(db.widgetConfigDao().get(7)!!.eventId)
     }
 }
