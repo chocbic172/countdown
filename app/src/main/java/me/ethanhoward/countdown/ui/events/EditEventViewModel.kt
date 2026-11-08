@@ -204,6 +204,11 @@ class EditEventViewModel(application: Application, private val eventId: Long?) :
                 EditEventViewModel(this[APPLICATION_KEY]!!, id)
             }
         }
+
+        /** For callers outside the nav graph, where there is no [ARG_EVENT_ID] argument to read. */
+        fun factory(eventId: Long) = viewModelFactory {
+            initializer { EditEventViewModel(this[APPLICATION_KEY]!!, eventId) }
+        }
     }
 }
 

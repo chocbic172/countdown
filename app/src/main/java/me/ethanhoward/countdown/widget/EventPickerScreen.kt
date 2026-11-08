@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -61,6 +62,7 @@ fun EventPickerScreen(
     viewModel: EventPickerViewModel,
     onPick: (Long) -> Unit,
     onNewEvent: () -> Unit,
+    onEditEvent: (Long) -> Unit,
     onCancel: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -127,6 +129,9 @@ fun EventPickerScreen(
                             val date = event.targetDate.format(dateFormatter) +
                                 (event.targetTime?.let { " · " + it.format(timeFormatter) } ?: "")
                             Text(date, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = {onEditEvent(event.id)}) {
+                            Icon(Icons.Outlined.Edit, contentDescription = "Edit Event")
                         }
                         RadioButton(selected = selected, onClick = null)
                     }

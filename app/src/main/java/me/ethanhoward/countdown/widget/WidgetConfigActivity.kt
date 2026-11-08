@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -18,6 +19,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.launch
 import me.ethanhoward.countdown.ui.events.EditEventScreen
+import me.ethanhoward.countdown.ui.events.EditEventViewModel
 import me.ethanhoward.countdown.ui.theme.CountdownTheme
 
 /**
@@ -46,6 +48,10 @@ class WidgetConfigActivity : ComponentActivity() {
                     },
                 )
                 var creatingEvent by rememberSaveable { mutableStateOf(false) }
+                var editingEventId by rememberSaveable { mutableStateOf<Long?>(null) }
+                // Bumped each time the editor opens, so reopening an event doesn't restore discarded changes.
+                var editSession by rememberSaveable { mutableIntStateOf(0) }
+                val eventToEdit = editingEventId
 
                 fun choose(eventId: Long) {
                     lifecycleScope.launch {
@@ -57,12 +63,29 @@ class WidgetConfigActivity : ComponentActivity() {
 
                 if (creatingEvent) {
                     BackHandler { creatingEvent = false }
-                    EditEventScreen(onDone = { savedId -> if (savedId != null) choose(savedId) else creatingEvent = false })
+                    EditEventScreen(onDone = { savedId ->
+                        if (savedId != null) choose(savedId) else creatingEvent = false
+                    })
+                } else if (eventToEdit != null) {
+                    BackHandler { editingEventId = null }
+                    EditEventScreen(
+                        onDone = { savedId ->
+                            if (savedId != null) choose(savedId) else editingEventId = null
+                        },
+                        viewModel = viewModel(
+                            key = "edit-event-$eventToEdit-$editSession",
+                            factory = EditEventViewModel.factory(eventToEdit),
+                        ),
+                    )
                 } else {
                     EventPickerScreen(
                         viewModel = picker,
                         onPick = ::choose,
                         onNewEvent = { creatingEvent = true },
+                        onEditEvent = { id ->
+                            editSession++
+                            editingEventId = id
+                        },
                         onCancel = ::finish,
                     )
                 }
